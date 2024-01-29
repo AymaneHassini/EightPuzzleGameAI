@@ -18,7 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
-
+import math 
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -187,25 +187,49 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+# Modify the nullHeuristic function to represent the trivial heuristic
+def nullHeuristic(state, problem=None):
+    """
+    A heuristic function estimates the cost from the current state to the nearest
+    goal in the provided SearchProblem.  This heuristic is trivial.
+    """
+    return 0
+
+# New heuristic function for the number of misplaced tiles
+def misplacedTilesHeuristic(state, problem=None):
+    """
+    A heuristic function that counts the number of misplaced tiles in the current state
+    compared to the goal state.
+    """
+    misplaced_count = 0
+    goal_state = problem.goal  # Assuming problem has a 'goal' attribute representing the goal state
+
+    for row in range(3):
+        for col in range(3):
+            if state.cells[row][col] != goal_state.cells[row][col]:
+                misplaced_count += 1
+
+    return misplaced_count
+
+# Modify the aStarSearch function to use the new heuristic
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
 
-    #to be explored (FIFO): takes in item, cost+heuristic
+    # to be explored (PriorityQueue): takes in (item, cost + heuristic)
     frontier = util.PriorityQueue()
 
-    exploredNodes = [] #holds (state, cost)
+    exploredNodes = []  # holds (state, cost)
 
     startState = problem.getStartState()
-    startNode = (startState, [], 0) #(state, action, cost)
+    startNode = (startState, [], 0)  # (state, action, cost)
 
-    frontier.push(startNode, 0)
+    frontier.push(startNode, 0 + heuristic(startState, problem))  # Add heuristic here
 
     while not frontier.isEmpty():
-
-        #begin exploring first (lowest-combined (cost+heuristic) ) node on frontier
+        # begin exploring first (lowest-combined (cost + heuristic)) node on frontier
         currentState, actions, currentCost = frontier.pop()
 
-        #put popped node into explored list
+        # put popped node into explored list
         currentNode = (currentState, currentCost)
         exploredNodes.append((currentState, currentCost))
 
@@ -213,30 +237,31 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             return actions
 
         else:
-            #list of (successor, action, stepCost)
+            # list of (successor, action, stepCost)
             successors = problem.getSuccessors(currentState)
 
-            #examine each successor
+            # examine each successor
             for succState, succAction, succCost in successors:
                 newAction = actions + [succAction]
                 newCost = problem.getCostOfActions(newAction)
                 newNode = (succState, newAction, newCost)
 
-                #check if this successor has been explored
+                # check if this successor has been explored
                 already_explored = False
                 for explored in exploredNodes:
-                    #examine each explored node tuple
+                    # examine each explored node tuple
                     exploredState, exploredCost = explored
 
                     if (succState == exploredState) and (newCost >= exploredCost):
                         already_explored = True
 
-                #if this successor not explored, put on frontier and explored list
+                # if this successor not explored, put on frontier and explored list
                 if not already_explored:
-                    frontier.push(newNode, newCost + heuristic(succState, problem))
+                    frontier.push(newNode, newCost + heuristic(succState, problem))  # Add heuristic here
                     exploredNodes.append((succState, newCost))
 
     return actions
+
 
 
 # Abbreviations
